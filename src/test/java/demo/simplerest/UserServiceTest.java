@@ -22,7 +22,7 @@ public class UserServiceTest {
     @Test
     public void shouldCreateUser() {
         User user = newUser("Jane", "123");
-        User savedUser = userService.save(user);
+        User savedUser = userService.create(user);
         assertNotNull(savedUser.getId());
     }
 
@@ -30,9 +30,22 @@ public class UserServiceTest {
     public void shouldCreateUserIgnoringPresetId() {
         User user = newUser("Helen", "3222");
         user.setId(100l);
-        User savedUser = userService.save(user);
+        User savedUser = userService.create(user);
         assertNotNull(savedUser.getId());
         assertNotEquals(user.getId(), savedUser.getId());
+    }
+
+    @Test
+    public void shouldCreateNewUserIfIdOfExistUserPassed() {
+        User user1 = newUser("Helen", "3224672");
+        User savedUser = userService.create(user1);
+
+        User user2 = newUser("Anna", "32253242");
+        user2.setId(savedUser.getId());
+        User savedUser2 = userService.create(user2);
+
+        assertNotNull(savedUser.getId());
+        assertNotEquals(savedUser2.getId(), savedUser.getId());
     }
 
     @Test
@@ -40,8 +53,8 @@ public class UserServiceTest {
         User user1 = newUser("Thomas", "3456789");
         User user2 = newUser("Thomas", "456");
 
-        User savedUser1 = userService.save(user1);
-        User savedUser2 = userService.save(user2);
+        User savedUser1 = userService.create(user1);
+        User savedUser2 = userService.create(user2);
         assertNotNull(savedUser1.getId());
         assertNotNull(savedUser2.getId());
         assertNotEquals(savedUser1.getId(), savedUser2.getId());
@@ -51,9 +64,9 @@ public class UserServiceTest {
     public void shouldUpdateUser() {
         String initialName = "Lily";
         User user = newUser(initialName, "345");
-        User savedUser = userService.save(user);
+        User savedUser = userService.create(user);
         savedUser.setName("Lilly");
-        User updatedUser = userService.save(user);
+        User updatedUser = userService.create(user);
 
         assertNotNull(updatedUser.getId());
         assertNotNull(updatedUser.getName());
@@ -67,14 +80,14 @@ public class UserServiceTest {
         User user1 = newUser("Ben Affleck", phone);
         User user2 = newUser("Jennifer Lopez", phone);
 
-        userService.save(user1);
-        userService.save(user2);
+        userService.create(user1);
+        userService.create(user2);
     }
 
     @Test
     public void shouldCreateUserWithoutPhone() {
         User user1 = newUser("Mary", null);
-        assertNotNull(userService.save(user1).getId());
+        assertNotNull(userService.create(user1).getId());
     }
 
     @Test
@@ -82,8 +95,8 @@ public class UserServiceTest {
         User user1 = newUser("Benny", null);
         User user2 = newUser("Willy", null);
 
-        User savedUser1 = userService.save(user1);
-        User savedUser2 = userService.save(user2);
+        User savedUser1 = userService.create(user1);
+        User savedUser2 = userService.create(user2);
 
         assertNotNull(savedUser1.getId());
         assertNotNull(savedUser2.getId());
@@ -92,9 +105,9 @@ public class UserServiceTest {
 
     @Test
     public void shouldFindAllUsers() {
-        User savedUser1 = userService.save(newUser("User1", "12345"));
-        User savedUser2 = userService.save(newUser("User2", "67890"));
-        User savedUser3 = userService.save(newUser("User3", "01234"));
+        User savedUser1 = userService.create(newUser("User1", "12345"));
+        User savedUser2 = userService.create(newUser("User2", "67890"));
+        User savedUser3 = userService.create(newUser("User3", "01234"));
 
         List<User> users = userService.findAll();
         assertTrue(users.size() >= 3);
@@ -107,7 +120,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldFindUserById() {
-        User savedUser = userService.save(newUser("Mikky Rurke", "54412345"));
+        User savedUser = userService.create(newUser("Mikky Rurke", "54412345"));
         User foundUser = userService.findById(savedUser.getId());
         assertEquals(savedUser.getId(), foundUser.getId());
         assertEquals(savedUser.getName(), foundUser.getName());
@@ -116,7 +129,7 @@ public class UserServiceTest {
     @Test
     public void shouldFindUserByName() {
         String name = "Angelina Jolie";
-        User savedUser = userService.save(newUser(name, "54412341235"));
+        User savedUser = userService.create(newUser(name, "54412341235"));
         List<User> foundUsers = userService.findByName(name);
         assertEquals(1, foundUsers.size());
         assertEquals(savedUser.getName(), foundUsers.get(0).getName());
@@ -125,7 +138,7 @@ public class UserServiceTest {
     @Test
     public void shouldFindUserByNameIgnoringCase() {
         String name = "Matthew Perry";
-        User savedUser = userService.save(newUser(name, "222333222"));
+        User savedUser = userService.create(newUser(name, "222333222"));
         List<User> foundUsers = userService.findByName("maTtHew PeRRy");
         assertEquals(1, foundUsers.size());
         assertEquals(savedUser.getName(), foundUsers.get(0).getName());
@@ -134,7 +147,7 @@ public class UserServiceTest {
     @Test
     public void shouldFindUserNameByFirstFewLetters() {
         String name = "Courteney Cox";
-        User savedUser = userService.save(newUser(name, "111133344466"));
+        User savedUser = userService.create(newUser(name, "111133344466"));
         List<User> foundUsers = userService.findByName("court");
         assertEquals(1, foundUsers.size());
         assertEquals(savedUser.getName(), foundUsers.get(0).getName());
@@ -143,7 +156,7 @@ public class UserServiceTest {
     @Test
     public void shouldNotFindByNameIfItNotStartedWithLetters() {
         String name = "Jennifer Aniston";
-        User savedUser = userService.save(newUser(name, "09876"));
+        User savedUser = userService.create(newUser(name, "09876"));
         List<User> foundUsers = userService.findByName("nife");
         assertTrue(foundUsers.isEmpty());
     }
@@ -151,7 +164,7 @@ public class UserServiceTest {
     @Test
     public void shouldDeleteExistedUser() {
         String name = "Met Leblanc";
-        User savedUser = userService.save(newUser(name, "0987654"));
+        User savedUser = userService.create(newUser(name, "0987654"));
         userService.remove(savedUser.getId());
         List<User> foundUsers = userService.findByName("nife");
         assertTrue(foundUsers.isEmpty());

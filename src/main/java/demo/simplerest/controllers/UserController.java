@@ -35,21 +35,32 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(value = HttpStatus.OK)
-    public void create(@RequestBody User user) {// todo: handle wrong data (don't have user or phone duplicated)
-        userService.save(user);
+    public ResponseEntity<User> create(@RequestBody User user) {// todo: handle wrong data (don't have user or phone duplicated)
+        return new ResponseEntity<>(userService.create(user), HttpStatus.OK);
     }
 
     @PutMapping
-    @ResponseStatus(value = HttpStatus.OK)// todo: handle situation when user doesn't exist
-    public void update(@RequestBody User user) {// todo: handle wrong data (don't have user or phone duplicated)
-        userService.update(user);
+    @ResponseStatus(value = HttpStatus.OK)
+    public ResponseEntity<User> update(@RequestBody User user) {// todo: handle wrong data (don't have user or phone duplicated)
+        if (user.getId() == null) {
+            return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
+        }
+        User userToUpdate = userService.findById(user.getId());
+        if (userToUpdate != null) {
+            new ResponseEntity<>(userService.update(user), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(user, HttpStatus.NOT_FOUND);
     }
 
 
     @DeleteMapping(value = "/{id}")
     @ResponseStatus(value = HttpStatus.OK)
-    public void delete(@PathVariable("id") long id) {
-        userService.remove(id);// todo: need to return HttpStatus.NOT_FOUND if user not found
+    public ResponseEntity<User> delete(@PathVariable("id") long id) {
+        User userToDelete = userService.findById(id);
+        if (userToDelete != null) {
+            userService.remove(id);
+        }
+        return new ResponseEntity<>(userToDelete, userToDelete == null ? HttpStatus.NOT_FOUND : HttpStatus.OK);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

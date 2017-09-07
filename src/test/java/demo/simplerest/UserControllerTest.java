@@ -26,6 +26,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -49,7 +50,7 @@ public class UserControllerTest {
     @Test
     public void shouldReturnOkStatusOnSave() throws Exception {
         User user = newUser();
-        when(userService.save(user)).thenReturn(user);
+        when(userService.create(user)).thenReturn(user);
         mockMvc.perform(
                 post("/users/")
                         .contentType(APPLICATION_JSON_UTF8)
@@ -60,6 +61,7 @@ public class UserControllerTest {
     @Test
     public void shouldReturnOkStatusOnUpdate() throws Exception {
         User user = newUser();
+        when(userService.findById(user.getId())).thenReturn(user);
         when(userService.update(user)).thenReturn(user);
         mockMvc.perform(
                 put("/users/")
@@ -69,14 +71,22 @@ public class UserControllerTest {
     }
 
     @Test
-    public void shouldReturnHandleUpdateNotExistedUser() throws Exception {
-        // todo: implement and rename
+    public void shouldReturn404IfUpdateNotExistedUser() throws Exception {
+        User user = newUser();
+        when(userService.findById(user.getId())).thenReturn(null);
+        when(userService.update(user)).thenReturn(user);
+        mockMvc.perform(
+                put("/users/")
+                        .contentType(APPLICATION_JSON_UTF8)
+                        .content(convertObjectToJsonBytes(user)))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
     }
 
 
     @Test
     public void shouldReturnOkStatusOnDelete() throws Exception {
         User user = newUser();
+        when(userService.findById(user.getId())).thenReturn(user);
         doNothing().when(userService).remove(user.getId());
         mockMvc.perform(
                 delete("/users/" + user.getId()))
@@ -84,8 +94,29 @@ public class UserControllerTest {
     }
 
     @Test
-    public void shouldReturnUsersOnFindAll() {
-        //todo: implement test
+    public void shouldReturn404IfDeleteNotExistedUser() throws Exception {
+        User user = newUser();
+        when(userService.findById(user.getId())).thenReturn(null);
+        doNothing().when(userService).remove(user.getId());
+        mockMvc.perform(
+                delete("/users/" + user.getId()))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturnUsersOnFindAll() throws Exception {
+        when(userService.findAll()).thenReturn(new ArrayList<>());
+        User user1 = newUser();
+        User user2 = new User();
+        user2.setName("Jane");
+        user2.setId(19l);
+
+        when(userService.findAll()).thenReturn(Arrays.asList(user1, user2));
+        mockMvc.perform(get("/users")).andDo(print());
+        mockMvc.perform(
+                get("/users"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json("[{'id':15,'name':'Jane','phone':null},{'id':19,'name':'Jane','phone':null}]"));
     }
 
     @Test
@@ -99,13 +130,23 @@ public class UserControllerTest {
     }
 
     @Test
-    public void shouldReturn404WhenUserNotFoundById() {
-        //todo: implement test
+    public void shouldReturn404WhenUserNotFoundById() throws Exception {
+        User user = newUser();
+        when(userService.findById(user.getId())).thenReturn(null);
+        mockMvc.perform(
+                get("/users/name/" + user.getName()))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json("[]"));
     }
 
     @Test
-    public void shouldReturn404WhenUserNotFoundByName() {
-        //todo: implement test
+    public void shouldReturnEmptyListWhenUserNotFoundByName() throws Exception {
+        User user = newUser();
+        when(userService.findByName(user.getName())).thenReturn(new ArrayList<>());
+        mockMvc.perform(
+                get("/users/name/" + user.getName()))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(content().json("[]"));
     }
 
     @Test

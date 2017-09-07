@@ -7,7 +7,7 @@ import java.util.List;
 public interface UserService {
     void remove(Long userId);
 
-    User save(User user);// todo: add validation for phone
+    User create(User user);// todo: add validation for phone
 
     User update(User user);
 
