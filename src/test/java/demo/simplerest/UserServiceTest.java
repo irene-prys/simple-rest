@@ -20,23 +20,24 @@ public class UserServiceTest {
     private UserService userService;
 
     @Test
-    public void shouldCreateUser() {
+    public void shouldCreateUser() throws InvalidDataException {
         User user = newUser("Jane", "123");
         User savedUser = userService.create(user);
         assertNotNull(savedUser.getId());
     }
 
     @Test
-    public void shouldCreateUserIgnoringPresetId() {
+    public void shouldCreateUserIgnoringPresetId() throws InvalidDataException {
+        Long presetId = 100l;
         User user = newUser("Helen", "3222");
-        user.setId(100l);
+        user.setId(presetId);
         User savedUser = userService.create(user);
         assertNotNull(savedUser.getId());
-        assertNotEquals(user.getId(), savedUser.getId());
+        assertNotEquals(presetId, savedUser.getId());
     }
 
     @Test
-    public void shouldCreateNewUserIfIdOfExistUserPassed() {
+    public void shouldCreateNewUserIfIdOfExistUserPassed() throws InvalidDataException {
         User user1 = newUser("Helen", "3224672");
         User savedUser = userService.create(user1);
 
@@ -49,7 +50,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldCreateUserWithTheSameName() {
+    public void shouldCreateUserWithTheSameName() throws InvalidDataException {
         User user1 = newUser("Thomas", "3456789");
         User user2 = newUser("Thomas", "456");
 
@@ -61,12 +62,12 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldUpdateUser() {
+    public void shouldUpdateUser() throws InvalidDataException {
         String initialName = "Lily";
-        User user = newUser(initialName, "345");
+        User user = newUser(initialName, "54321");
         User savedUser = userService.create(user);
         savedUser.setName("Lilly");
-        User updatedUser = userService.create(user);
+        User updatedUser = userService.update(user);
 
         assertNotNull(updatedUser.getId());
         assertNotNull(updatedUser.getName());
@@ -74,8 +75,8 @@ public class UserServiceTest {
         assertNotEquals(initialName, updatedUser.getName());
     }
 
-    @Test(expected = DataAccessException.class)
-    public void shouldNotAllowCreateUserWithDuplicatedPhones() {
+    @Test(expected = InvalidDataException.class)
+    public void shouldNotAllowCreateUserWithDuplicatedPhones() throws InvalidDataException {
         final String phone = "2233";
         User user1 = newUser("Ben Affleck", phone);
         User user2 = newUser("Jennifer Lopez", phone);
@@ -85,13 +86,21 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldCreateUserWithoutPhone() {
+    public void shouldCreateUserWithoutPhone() throws InvalidDataException {
         User user1 = newUser("Mary", null);
         assertNotNull(userService.create(user1).getId());
     }
 
+    @Test(expected = InvalidDataException.class)
+    public void shouldThrowExceptionIfUserWithSuchPhoneExists() throws InvalidDataException {
+        User user1 = newUser("John Doe", "1234567890");
+        User user2 = newUser("Jane Doe", "1234567890");
+        userService.create(user1);
+        userService.create(user2);
+    }
+
     @Test
-    public void shouldCreateSeveralUsersWithoutPhone() {
+    public void shouldCreateSeveralUsersWithoutPhone() throws InvalidDataException {
         User user1 = newUser("Benny", null);
         User user2 = newUser("Willy", null);
 
@@ -104,7 +113,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldFindAllUsers() {
+    public void shouldFindAllUsers() throws InvalidDataException {
         User savedUser1 = userService.create(newUser("User1", "12345"));
         User savedUser2 = userService.create(newUser("User2", "67890"));
         User savedUser3 = userService.create(newUser("User3", "01234"));
@@ -119,7 +128,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldFindUserById() {
+    public void shouldFindUserById() throws InvalidDataException {
         User savedUser = userService.create(newUser("Mikky Rurke", "54412345"));
         User foundUser = userService.findById(savedUser.getId());
         assertEquals(savedUser.getId(), foundUser.getId());
@@ -127,7 +136,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldFindUserByName() {
+    public void shouldFindUserByName() throws InvalidDataException {
         String name = "Angelina Jolie";
         User savedUser = userService.create(newUser(name, "54412341235"));
         List<User> foundUsers = userService.findByName(name);
@@ -136,7 +145,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldFindUserByNameIgnoringCase() {
+    public void shouldFindUserByNameIgnoringCase() throws InvalidDataException {
         String name = "Matthew Perry";
         User savedUser = userService.create(newUser(name, "222333222"));
         List<User> foundUsers = userService.findByName("maTtHew PeRRy");
@@ -145,7 +154,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldFindUserNameByFirstFewLetters() {
+    public void shouldFindUserNameByFirstFewLetters() throws InvalidDataException {
         String name = "Courteney Cox";
         User savedUser = userService.create(newUser(name, "111133344466"));
         List<User> foundUsers = userService.findByName("court");
@@ -154,7 +163,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldNotFindByNameIfItNotStartedWithLetters() {
+    public void shouldNotFindByNameIfItNotStartedWithLetters() throws InvalidDataException {
         String name = "Jennifer Aniston";
         User savedUser = userService.create(newUser(name, "09876"));
         List<User> foundUsers = userService.findByName("nife");
@@ -162,7 +171,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldDeleteExistedUser() {
+    public void shouldDeleteExistedUser() throws InvalidDataException {
         String name = "Met Leblanc";
         User savedUser = userService.create(newUser(name, "0987654"));
         userService.remove(savedUser.getId());

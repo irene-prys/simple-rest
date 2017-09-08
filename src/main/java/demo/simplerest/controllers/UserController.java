@@ -1,9 +1,9 @@
 package demo.simplerest.controllers;
 
+import demo.simplerest.InvalidDataException;
 import demo.simplerest.entities.User;
 import demo.simplerest.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.config.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,22 +32,21 @@ public class UserController {
         return userService.findByName(name);
     }
 
-
     @PostMapping
     @ResponseStatus(value = HttpStatus.OK)
-    public ResponseEntity<User> create(@RequestBody User user) {// todo: handle wrong data (don't have user or phone duplicated)
+    public ResponseEntity<User> create(@RequestBody User user) throws InvalidDataException {
         return new ResponseEntity<>(userService.create(user), HttpStatus.OK);
     }
 
     @PutMapping
     @ResponseStatus(value = HttpStatus.OK)
-    public ResponseEntity<User> update(@RequestBody User user) {// todo: handle wrong data (don't have user or phone duplicated)
+    public ResponseEntity<User> update(@RequestBody User user) throws InvalidDataException {
         if (user.getId() == null) {
             return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
         }
         User userToUpdate = userService.findById(user.getId());
         if (userToUpdate != null) {
-            new ResponseEntity<>(userService.update(user), HttpStatus.OK);
+            return new ResponseEntity<>(userService.update(user), HttpStatus.OK);
         }
         return new ResponseEntity<>(user, HttpStatus.NOT_FOUND);
     }
@@ -63,11 +62,10 @@ public class UserController {
         return new ResponseEntity<>(userToDelete, userToDelete == null ? HttpStatus.NOT_FOUND : HttpStatus.OK);
     }
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    @ResponseStatus(value = HttpStatus.NOT_FOUND)
+    @ExceptionHandler(InvalidDataException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     @ResponseBody
-    public String handleResourceNotFoundException(ResourceNotFoundException ex)// todo: implement it
-    {
+    public String handleResourceNotFoundException(InvalidDataException ex) {
         return ex.getMessage();
     }
 }

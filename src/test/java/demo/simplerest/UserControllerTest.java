@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -62,7 +63,7 @@ public class UserControllerTest {
     public void shouldReturnOkStatusOnUpdate() throws Exception {
         User user = newUser();
         when(userService.findById(user.getId())).thenReturn(user);
-        when(userService.update(user)).thenReturn(user);
+        when(userService.update(any(User.class))).thenReturn(user);
         mockMvc.perform(
                 put("/users/")
                         .contentType(APPLICATION_JSON_UTF8)
